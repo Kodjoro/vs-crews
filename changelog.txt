@@ -1,6 +1,6 @@
 VS-Crews Changelog
 
-Version: alpha1 (2025-12-27)
+Version: 1.0.0 (2025-12-27)
 
 Highlights
 - Crew persistence: crews and memberships now persist across restarts using world SavedData.
