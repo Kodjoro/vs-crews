@@ -1,0 +1,56 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="All rights reserved"
+
+[[mods]]
+modId="vs-crews"
+version="${file.jarVersion}"
+displayName="VS-Crews"
+credits="Thanks to the makers of Valkyrien Skies and Eureka"
+authors="Kodjoro"
+description='''VS-Crews is a permission and crew management addon for Valkyrien Skies and Eureka!
+
+This mod allows players to create and manage custom crews using the /vscrew command.
+When a crew member places down a ship helm, it becomes associated with that crew.
+Only members of the owning crew (or the solo player who placed it) can use the helm
+and break or place blocks on the ship the helm controls.
+
+Features
+• Create, add, and manage crew members via commands
+• Crew permissions for ship helms and ship blocks
+• Solo players can place a helm and retain exclusive access without a crew
+
+Example usage:
+/vscrew create <name>
+/vscrew add <crew> <player>
+/vscrew remove <crew> <player>
+/vscrew info <crew>
+
+Make sure Valkyrien Skies and Eureka are installed alongside this addon.
+'''
+
+[[dependencies.vs-crews]]
+modId="forge"
+mandatory=true
+versionRange="[36,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.vs-crews]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.16.5,1.17)"
+ordering="NONE"
+side="BOTH"
+
+#[[dependencies.vs-crews]]
+#modId="valkyrienskies"
+#mandatory=true
+#ordering="AFTER"
+#side="BOTH"
+#
+#[[dependencies.vs-crews]]
+#modId="eureka"
+#mandatory=true
+#ordering="AFTER"
+#side="BOTH"
