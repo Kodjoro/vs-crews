@@ -178,4 +178,28 @@ public class CrewManager {
         persist();
         return true;
     }
+
+    public static boolean renameCrew(String oldName, String newName, UUID requester) {
+        if (oldName == null || newName == null) return false;
+        String normalizedNew = newName.trim();
+        if (normalizedNew.isEmpty()) return false;
+        Crew c = crews.get(oldName);
+        if (c == null) return false;
+        if (!c.getOwner().equals(requester)) return false;
+        // deny if new name conflicts case-insensitively with any existing crew (excluding self if names equal ignoring case)
+        for (String existing : crews.keySet()) {
+            if (existing.equalsIgnoreCase(normalizedNew) && !existing.equalsIgnoreCase(oldName)) {
+                return false;
+            }
+        }
+        // perform rename: remove old, insert new with same members/owner
+        Crew renamed = new Crew(normalizedNew, c.getOwner());
+        for (UUID u : c.getMembers()) {
+            renamed.addMember(u);
+        }
+        crews.remove(oldName);
+        crews.put(normalizedNew, renamed);
+        persist();
+        return true;
+    }
 }

@@ -47,86 +47,86 @@ public class VSCrewCommand {
     };
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
-        dispatcher.register(
-                Commands.literal("vscrew")
+        com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSource> root = Commands.literal("vscrew");
 
-                        .then(Commands.literal("create")
-                                .then(Commands.argument("name", StringArgumentType.word())
-                                        .executes(ctx -> {
-                                            ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
-                                            String name = StringArgumentType.getString(ctx, "name");
+        if (VSCrewsConfig.ALLOW_NON_OWNER_MANAGE_MEMBERS.get()) {
+            root = root.then(
+                    Commands.literal("add")
+                            .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
+                                    .then(Commands.argument("player", StringArgumentType.word()).suggests(PLAYER_SUGGEST)
+                                            .executes(ctx -> add(ctx.getSource(),
+                                                    StringArgumentType.getString(ctx, "crew"),
+                                                    StringArgumentType.getString(ctx, "player"))))));}
 
-                                            // Enforce config: only one crew per player (if enabled)
-                                            if (VSCrewsConfig.ONLY_ONE_CREW_PER_PLAYER.get()) {
-                                                if (CrewManager.findCrewByOwner(player.getUUID()) != null || CrewManager.findCrewByMember(player.getUUID()) != null) {
-                                                    player.sendMessage(new StringTextComponent("You are already in a crew."), player.getUUID());
-                                                    return 0;
-                                                }
-                                            }
+        // create
+        root = root.then(
+                Commands.literal("create")
+                        .then(Commands.argument("name", StringArgumentType.word())
+                                .executes(ctx -> {
+                                    ServerPlayerEntity player = ctx.getSource().getPlayerOrException();
+                                    String name = StringArgumentType.getString(ctx, "name");
+                                    // Enforce config: only one crew per player (if enabled)
+                                    if (VSCrewsConfig.ONLY_ONE_CREW_PER_PLAYER.get()) {
+                                        if (CrewManager.findCrewByOwner(player.getUUID()) != null || CrewManager.findCrewByMember(player.getUUID()) != null) {
+                                            player.sendMessage(new StringTextComponent("You are already in a crew."), player.getUUID());
+                                            return 0;
+                                        }
+                                    }
+                                    if (CrewManager.isNameTaken(name)) {
+                                        player.sendMessage(new StringTextComponent("Crew name is already taken."), player.getUUID());
+                                        return 0;
+                                    }
+                                    if (CrewManager.createCrew(name, player.getUUID())) {
+                                        player.sendMessage(new StringTextComponent("Crew created: " + name), player.getUUID());
+                                        return 1;
+                                    } else {
+                                        player.sendMessage(new StringTextComponent("Could not create crew."), player.getUUID());
+                                        return 0;}})));
 
-                                            if (CrewManager.isNameTaken(name)) {
-                                                player.sendMessage(new StringTextComponent("Crew name is already taken."), player.getUUID());
-                                                return 0;
-                                            }
-
-                                            if (CrewManager.createCrew(name, player.getUUID())) {
-                                                player.sendMessage(new StringTextComponent("Crew created: " + name), player.getUUID());
-                                                return 1;
-                                            } else {
-                                                player.sendMessage(new StringTextComponent("Could not create crew."), player.getUUID());
-                                                return 0;
-                                            }
-                                        })
-                                )
+        // delete
+        root = root.then(
+                Commands.literal("delete")
+                        .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
+                                .executes(ctx -> delete(ctx.getSource(), StringArgumentType.getString(ctx, "crew")))
                         )
+                        .executes(ctx -> deleteAuto(ctx.getSource())));
 
-                        .then(Commands.literal("add")
-                                .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
-                                        .then(Commands.argument("player", StringArgumentType.word()).suggests(PLAYER_SUGGEST)
-                                                .executes(ctx -> add(ctx.getSource(),
-                                                        StringArgumentType.getString(ctx, "crew"),
-                                                        StringArgumentType.getString(ctx, "player"))
-                                                )
-                                        )
-                                )
+        // info
+        root = root.then(
+                Commands.literal("info")
+                        .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
+                                .executes(ctx ->  info(ctx.getSource(), StringArgumentType.getString(ctx, "crew")))
                         )
+                        .executes(ctx -> infoAuto(ctx.getSource())));
 
-                        .then(Commands.literal("remove")
-                                .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
-                                        .then(Commands.argument("player", StringArgumentType.word()).suggests(PLAYER_SUGGEST)
-                                                .executes(ctx -> remove(ctx.getSource(),
-                                                        StringArgumentType.getString(ctx, "crew"),
-                                                        StringArgumentType.getString(ctx, "player"))
-                                                )
-                                        )
-                                )
+        // leave
+        root = root.then(
+                Commands.literal("leave")
+                        .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
+                                .executes(ctx -> leave(ctx.getSource(), StringArgumentType.getString(ctx, "crew")))
                         )
+                        .executes(ctx -> leaveAuto(ctx.getSource())));
 
-                        .then(Commands.literal("info")
-                                .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
-                                        .executes(ctx ->  info(ctx.getSource(), StringArgumentType.getString(ctx, "crew")))
-                                )
-                                .executes(ctx -> infoAuto(ctx.getSource()))
-                        )
+        // remove (conditional)
+        if (VSCrewsConfig.ALLOW_NON_OWNER_MANAGE_MEMBERS.get()) {
+            root = root.then(
+                    Commands.literal("remove")
+                            .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
+                                    .then(Commands.argument("player", StringArgumentType.word()).suggests(PLAYER_SUGGEST)
+                                            .executes(ctx -> remove(ctx.getSource(),
+                                                    StringArgumentType.getString(ctx, "crew"),
+                                                    StringArgumentType.getString(ctx, "player"))))));}
 
-                        .then(Commands.literal("list")
-                                .executes(ctx -> list(ctx.getSource()))
-                        )
+        // rename
+        root = root.then(
+                Commands.literal("rename")
+                        .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
+                                .then(Commands.argument("newName", StringArgumentType.word())
+                                        .executes(ctx -> rename(ctx.getSource(),
+                                                StringArgumentType.getString(ctx, "crew"),
+                                                StringArgumentType.getString(ctx, "newName"))))));
 
-                        .then(Commands.literal("delete")
-                                .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
-                                        .executes(ctx -> delete(ctx.getSource(), StringArgumentType.getString(ctx, "crew")))
-                                )
-                                .executes(ctx -> deleteAuto(ctx.getSource()))
-                        )
-
-                        .then(Commands.literal("leave")
-                                .then(Commands.argument("crew", StringArgumentType.word()).suggests(CREW_SUGGEST)
-                                        .executes(ctx -> leave(ctx.getSource(), StringArgumentType.getString(ctx, "crew")))
-                                )
-                                .executes(ctx -> leaveAuto(ctx.getSource()))
-                        )
-        );
+        dispatcher.register(root);
     }
 
     private static int add(CommandSource src, String crew, String target) {
@@ -334,6 +334,35 @@ public class VSCrewCommand {
         return leave(src, c.getName());
     }
 
+    private static int rename(CommandSource src, String crewName, String newName) {
+        Crew c = CrewManager.getCrew(crewName);
+        if (c == null) {
+            src.sendSuccess(new StringTextComponent("Crew not found: " + crewName), false);
+            return 0;
+        }
+        ServerPlayerEntity caller = getCaller(src);
+        if (caller == null) {
+            src.sendSuccess(new StringTextComponent("This command must be run by a player."), false);
+            return 0;
+        }
+        if (!c.getOwner().equals(caller.getUUID())) {
+            src.sendSuccess(new StringTextComponent("Only the crew owner can rename the crew."), false);
+            return 0;
+        }
+        if (CrewManager.isNameTaken(newName)) {
+            src.sendSuccess(new StringTextComponent("Crew name is already taken."), false);
+            return 0;
+        }
+        boolean ok = CrewManager.renameCrew(crewName, newName, caller.getUUID());
+        if (ok) {
+            src.sendSuccess(new StringTextComponent("Renamed crew: " + crewName + " -> " + newName), true);
+            return 1;
+        } else {
+            src.sendSuccess(new StringTextComponent("Could not rename crew."), false);
+            return 0;
+        }
+    }
+
     private static UUID resolveOnlinePlayerUUID(CommandSource src, String name) {
         PlayerList list = src.getServer().getPlayerList();
         ServerPlayerEntity target = list.getPlayerByName(name);
@@ -350,45 +379,22 @@ public class VSCrewCommand {
 
     private static String resolvePlayerName(CommandSource src, UUID id) {
         if (id == null) return "Unknown";
-        // Try online first
-        PlayerList list = src.getServer().getPlayerList();
-        ServerPlayerEntity p = list.getPlayer(id);
-        if (p != null) {
-            String name = p.getGameProfile().getName();
-            // refresh cache with authoritative online name
-            CrewManager.cacheName(id, name);
-            return name;
-        }
-        // Fallback to cached name if available
+        // First try the cached name
         String cached = CrewManager.getCachedName(id);
         if (cached != null && !cached.isEmpty()) return cached;
-        // Fallback to UUID string if no cache
+        // Fallback to UUID string (should not happen often)
         return id.toString();
     }
 
-    private static UUID resolvePlayerId(CommandSource src, String nameOrUuid) {
-        // Try online by name first
-        UUID online = resolveOnlinePlayerUUID(src, nameOrUuid);
-        if (online != null) return online;
-        // Try UUID string
+    private static UUID resolvePlayerId(CommandSource src, String nameOrId) {
+        // Check online players first
+        UUID id = resolveOnlinePlayerUUID(src, nameOrId);
+        if (id != null) return id;
+        // Not online, check UUID format (for offline players or if the server is using UUIDs)
         try {
-            return UUID.fromString(nameOrUuid);
-        } catch (IllegalArgumentException ignored) {}
-        // Try cached name (case-insensitive exact match)
-        String needle = nameOrUuid.toLowerCase(Locale.ROOT);
-        for (Crew crew : CrewManager.listCrews()) {
-            for (UUID id : crew.getMembers()) {
-                String cached = CrewManager.getCachedName(id);
-                if (cached != null && cached.toLowerCase(Locale.ROOT).equals(needle)) {
-                    return id;
-                }
-            }
-            UUID owner = crew.getOwner();
-            String cachedOwner = CrewManager.getCachedName(owner);
-            if (cachedOwner != null && cachedOwner.toLowerCase(Locale.ROOT).equals(needle)) {
-                return owner;
-            }
+            return UUID.fromString(nameOrId);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        return null;
     }
 }

@@ -28,7 +28,7 @@ public class VSCrewsConfig {
 
         ALLOW_NON_OWNER_MANAGE_MEMBERS = builder
                 .comment("If true, any crew member can add or remove members; if false, only the crew owner can.")
-                .define("allowNonOwnerManageMembers", false);
+                .define("allowNonOwnerManageMembers", true);
 
         builder.pop();
 
