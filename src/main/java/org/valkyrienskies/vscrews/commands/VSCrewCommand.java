@@ -4,7 +4,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -14,7 +13,6 @@ import org.valkyrienskies.vscrews.VSCrewsConfig;
 import org.valkyrienskies.vscrews.crew.Crew;
 import org.valkyrienskies.vscrews.crew.CrewManager;
 
-import java.util.Locale;
 import java.util.UUID;
 
 public class VSCrewCommand {
@@ -245,20 +243,6 @@ public class VSCrewCommand {
             return 0;
         }
         return info(src, c.getName());
-    }
-
-    private static int list(CommandSource src) {
-        if (CrewManager.listCrews().isEmpty()) {
-            src.sendSuccess(new StringTextComponent("No crews exist."), false);
-            return 1;
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("Crews:\n");
-        for (Crew c : CrewManager.listCrews()) {
-            sb.append(" - ").append(c.getName()).append(" (members: ").append(c.getMembers().size()).append(")\n");
-        }
-        src.sendSuccess(new StringTextComponent(sb.toString()), false);
-        return 1;
     }
 
     private static int delete(CommandSource src, String crewName) {

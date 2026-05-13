@@ -1,7 +1,6 @@
 package org.valkyrienskies.vscrews.events;
 
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -13,7 +12,6 @@ import org.valkyrienskies.core.api.Ship;
 import org.valkyrienskies.vscrews.VSCrewsConfig;
 import org.valkyrienskies.vscrews.crew.Crew;
 import org.valkyrienskies.vscrews.crew.CrewManager;
-import org.valkyrienskies.vscrews.helm.HelmOwnership;
 
 import java.util.UUID;
 

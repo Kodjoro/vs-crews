@@ -7,7 +7,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import xyz.pixelatedw.mineminenomi.api.abilities.Ability;
 
 import static org.valkyrienskies.mod.common.VSGameUtilsKt.getShipManagingPos;
 
