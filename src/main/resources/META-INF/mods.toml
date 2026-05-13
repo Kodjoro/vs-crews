@@ -3,54 +3,35 @@ loaderVersion="[36,)"
 license="All rights reserved"
 
 [[mods]]
-modId="vs-crews"
-version="${file.jarVersion}"
-displayName="VS-Crews"
-credits="Thanks to the makers of Valkyrien Skies and Eureka"
-authors="Kodjoro"
-description='''VS-Crews is a permission and crew management addon for Valkyrien Skies and Eureka!
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+description='''Crew system for Valkyrien Skies + Eureka.
+Create crews, manage members, and enforce helm usage/break/builder rules via server config.
 
-This mod allows players to create and manage custom crews using the /vscrew command.
-When a crew member places down a ship helm, it becomes associated with that crew.
-Only members of the owning crew (or the solo player who placed it) can use the helm
-and break or place blocks on the ship the helm controls.
+Core behavior
+- Helm use/break is gated by crew membership
+- Helms placed by non-crew players follow configurable rules (usable by everyone vs placer-only)
+- Helms referencing deleted crews behave like no-crew helms
+- Ships being unbreakable by non-crew members (only breakably using M1)
+- config for breaking will come later
 
-Features
-• Create, add, and manage crew members via commands
-• Crew permissions for ship helms and ship blocks
-• Solo players can place a helm and retain exclusive access without a crew
-
-Example usage:
-/vscrew create <name>
-/vscrew add <crew> <player>
-/vscrew remove <crew> <player>
-/vscrew info <crew>
-
-Make sure Valkyrien Skies and Eureka are installed alongside this addon.
+Commands (type /vscrew)
+- create <name> — create a crew (case-insensitive unique names)
+- info [crew] — show owner & members (names); no-arg when one-crew rule is enabled
+- add/remove <crew> <player> — manage members (optional: allow members to manage via config; owner-only otherwise)
+- delete [crew] — owner-only; removes a crew; no-arg when one-crew rule is enabled
+- leave [crew] — non-owner can leave; no-arg when one-crew rule is enabled
+- rename <crew> <newName> — owner-only; case-insensitive uniqueness enforced
 '''
 
-[[dependencies.vs-crews]]
+[[dependencies.${mod_id}]]
 modId="forge"
 mandatory=true
 versionRange="[36,)"
 ordering="NONE"
 side="BOTH"
 
-[[dependencies.vs-crews]]
-modId="minecraft"
-mandatory=true
-versionRange="[1.16.5,1.17)"
-ordering="NONE"
-side="BOTH"
-
-#[[dependencies.vs-crews]]
-#modId="valkyrienskies"
-#mandatory=true
-#ordering="AFTER"
-#side="BOTH"
-#
-#[[dependencies.vs-crews]]
-#modId="eureka"
-#mandatory=true
-#ordering="AFTER"
-#side="BOTH"
+[[mixins]]
+config="vscrews.mixins.json"

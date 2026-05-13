@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.valkyrienskies.vscrews.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "vscrews.refmap.json",
+  "mixins": [
+    "MixinWorld",
+    "MixinBlockProtection",
+    "MixinGomuGomuNoRocketProjectile",
+    "MixinContinuousComponent"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

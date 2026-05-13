@@ -20,8 +20,17 @@ import java.util.UUID;
 public class VSCrewCommand {
 
     private static final SuggestionProvider<CommandSource> CREW_SUGGEST = (ctx, builder) -> {
+        ServerPlayerEntity caller;
+        try {
+            caller = ctx.getSource().getPlayerOrException();
+        } catch (CommandSyntaxException e) {
+            return builder.buildFuture();
+        }
+        UUID id = caller.getUUID();
         for (Crew c : CrewManager.listCrews()) {
-            builder.suggest(c.getName());
+            if (id.equals(c.getOwner()) || c.isMember(id)) {
+                builder.suggest(c.getName());
+            }
         }
         return builder.buildFuture();
     };
@@ -76,7 +85,7 @@ public class VSCrewCommand {
                                         player.sendMessage(new StringTextComponent("Crew name is already taken."), player.getUUID());
                                         return 0;
                                     }
-                                    if (CrewManager.createCrew(name, player.getUUID())) {
+                                    if (CrewManager.createCrew(player.getLevel(), name, player.getUUID())) {
                                         player.sendMessage(new StringTextComponent("Crew created: " + name), player.getUUID());
                                         return 1;
                                     } else {
@@ -155,7 +164,7 @@ public class VSCrewCommand {
             src.sendSuccess(new StringTextComponent("Player is already a member."), false);
             return 0;
         }
-        CrewManager.addMember(crew, targetId);
+        CrewManager.addMember(caller.getLevel(), crew, targetId);
         src.sendSuccess(new StringTextComponent("Added player to crew: " + target), true);
         return 1;
     }
@@ -190,7 +199,11 @@ public class VSCrewCommand {
             src.sendSuccess(new StringTextComponent("You cannot remove the crew owner."), false);
             return 0;
         }
-        CrewManager.removeMember(crew, targetId);
+        CrewManager.removeMember(
+                caller.getLevel(),
+                crew,
+                targetId
+        );
         src.sendSuccess(new StringTextComponent("Removed player from crew: " + target), true);
         return 1;
     }
@@ -263,7 +276,11 @@ public class VSCrewCommand {
             src.sendSuccess(new StringTextComponent("Only the crew owner can delete the crew."), false);
             return 0;
         }
-        boolean ok = CrewManager.deleteCrew(crewName, caller.getUUID());
+        boolean ok = CrewManager.deleteCrew(
+                caller.getLevel(),
+                crewName,
+                caller.getUUID()
+        );
         if (ok) {
             src.sendSuccess(new StringTextComponent("Deleted crew: " + crewName), true);
             return 1;
@@ -306,7 +323,11 @@ public class VSCrewCommand {
             src.sendSuccess(new StringTextComponent("Crew owners must use /vscrew delete."), false);
             return 0;
         }
-        boolean ok = CrewManager.leaveCrew(crewName, caller.getUUID());
+        boolean ok = CrewManager.leaveCrew(
+                caller.getLevel(),
+                crewName,
+                caller.getUUID()
+        );
         if (ok) {
             src.sendSuccess(new StringTextComponent("You left the crew: " + crewName), true);
             return 1;

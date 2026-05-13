@@ -10,8 +10,6 @@ import net.minecraftforge.fml.ModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.valkyrienskies.vscrews.commands.VSCrewCommand;
-import org.valkyrienskies.vscrews.events.HelmPlaceListener;
-import org.valkyrienskies.vscrews.events.InteractListener;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import org.valkyrienskies.vscrews.crew.CrewManager;
@@ -24,9 +22,6 @@ public class VSCrewsMod
     public VSCrewsMod() {
         // Register config as SERVER to avoid client-side mismatches and use per-world serverconfig
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, VSCrewsConfig.COMMON_SPEC);
-
-        MinecraftForge.EVENT_BUS.register(new HelmPlaceListener());
-        MinecraftForge.EVENT_BUS.register(new InteractListener());
 
         // Register commands
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
