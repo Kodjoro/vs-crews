@@ -2,10 +2,9 @@ package org.valkyrienskies.vscrews.mixin;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.potion.Effect;
-import net.minecraft.util.math.BlockPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import net.minecraft.util.math.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
@@ -13,42 +12,36 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Locale;
 
 @Pseudo
 @Mixin(
         targets = {
-                "xyz.pixelatedw.mineminenomi.entities.projectiles.gomu.GomuGomuNoRocketProjectile",
-                "xyz.pixelatedw.mineminenomi.entities.projectiles.GomuGomuNoRocketProjectile"
+                "xyz.pixelatedw.mineminenomi.entities.projectiles.beta.BetaBetaChainProjectile",
+                "xyz.pixelatedw.mineminenomi.entities.projectiles.BetaBetaChainProjectile"
         },
         remap = false
 )
-public abstract class MixinGomuGomuNoRocketProjectile {
+public abstract class MixinBetaBetaChainProjectile {
 
     @Unique
-    private static final Logger VSCREWS_LOG = LogManager.getLogger("VSCrews/GomuRocket");
+    private static final Logger VSCREWS_LOG = LogManager.getLogger("VSCrews/BetaChain");
 
     @Inject(method = "onBlockImpactEvent", at = @At("HEAD"), cancellable = true, remap = false)
-    private void vscrews_onBlockImpactEvent(BlockPos hit, CallbackInfo ci) {
+    private void vscrews_fixShipRelativePull(BlockPos hit, CallbackInfo ci) {
         int life = vscrews_invokeInt(this, "getLife");
         int maxLife = vscrews_invokeInt(this, "getMaxLife");
-
         if (life >= maxLife) {
-            VSCREWS_LOG.debug("[RocketImpact] Ignored impact because life >= maxLife (life={}, maxLife={})", life, maxLife);
             ci.cancel();
             return;
         }
 
         LivingEntity entity = vscrews_invokeLiving(this, "getThrower");
         if (entity == null) {
-            VSCREWS_LOG.debug("[RocketImpact] Impact had no thrower (life={}, maxLife={})", life, maxLife);
             ci.cancel();
             return;
         }
-
-        vscrews_tryRemoveReducedFall(entity);
 
         double hitBlockX = hit.getX() + 0.5D;
         double hitBlockY = hit.getY() + 0.5D;
@@ -58,30 +51,26 @@ public abstract class MixinGomuGomuNoRocketProjectile {
         double hitY = vscrews_invokeDouble(this, "getY", hitBlockY);
         double hitZ = vscrews_invokeDouble(this, "getZ", hitBlockZ);
 
-        double playerX = entity.getX();
-        double playerY = entity.getY();
-        double playerZ = entity.getZ();
+        double dx = hitX - entity.getX();
+        double dy = hitY - entity.getY();
+        double dz = hitZ - entity.getZ();
 
-        double pullX = (hitX - playerX) * 0.35D;
-        double pullY = 0.3D + (hitY - playerY) * 0.35D;
-        double pullZ = (hitZ - playerZ) * 0.35D;
+        double pullX = dx * 0.35D;
+        double pullY = 0.3D + dy * 0.35D;
+        double pullZ = dz * 0.35D;
 
-        VSCREWS_LOG.info(
-                String.format(
-                        Locale.ROOT,
-                        "[RocketImpact] attachProj=(%.3f, %.3f, %.3f) attachBlock=(%.3f, %.3f, %.3f) player=(%.3f, %.3f, %.3f) pull=(%.3f, %.3f, %.3f) life=%d/%d dim=%s",
-                        hitX, hitY, hitZ,
-                        hitBlockX, hitBlockY, hitBlockZ,
-                        playerX, playerY, playerZ,
-                        pullX, pullY, pullZ,
-                        life, maxLife,
-                        entity.level.dimension().location()
-                )
-        );
+        VSCREWS_LOG.info(String.format(Locale.ROOT,
+                "[BetaImpact] attachProj=(%.3f, %.3f, %.3f) attachBlock=(%.3f, %.3f, %.3f) player=(%.3f, %.3f, %.3f) pull=(%.3f, %.3f, %.3f) life=%d/%d dim=%s",
+                hitX, hitY, hitZ,
+                hitBlockX, hitBlockY, hitBlockZ,
+                entity.getX(), entity.getY(), entity.getZ(),
+                pullX, pullY, pullZ,
+                life, maxLife,
+                entity.level.dimension().location()));
 
         if (!vscrews_trySetDeltaMovement(entity, pullX, pullY, pullZ)) {
             entity.setDeltaMovement(pullX, pullY, pullZ);
-            VSCREWS_LOG.warn("[RocketImpact] Fallback to Entity#setDeltaMovement because AbilityHelper reflection failed");
+            VSCREWS_LOG.warn("[BetaImpact] Fallback to Entity#setDeltaMovement because AbilityHelper reflection failed");
         }
 
         ci.cancel();
@@ -117,39 +106,6 @@ public abstract class MixinGomuGomuNoRocketProjectile {
             return out instanceof LivingEntity ? (LivingEntity) out : null;
         } catch (Throwable ignored) {
             return null;
-        }
-    }
-
-    @Unique
-    private static void vscrews_tryRemoveReducedFall(LivingEntity entity) {
-        String[] effectHolderClasses = {
-                "xyz.pixelatedw.mineminenomi.init.ModEffects",
-                "xyz.pixelatedw.mineminenomi.init.ModEffect"
-        };
-
-        for (String holderClassName : effectHolderClasses) {
-            try {
-                Class<?> holderClass = Class.forName(holderClassName);
-                Field reducedFallField = holderClass.getField("REDUCED_FALL");
-                Object reducedFallObj = reducedFallField.get(null);
-
-                Object effectObj = reducedFallObj;
-                if (reducedFallObj != null) {
-                    try {
-                        Method getMethod = reducedFallObj.getClass().getMethod("get");
-                        effectObj = getMethod.invoke(reducedFallObj);
-                    } catch (NoSuchMethodException ignored) {
-                        // Not a supplier-like object; use field value directly.
-                    }
-                }
-
-                if (effectObj instanceof Effect) {
-                    entity.removeEffect((Effect) effectObj);
-                }
-                return;
-            } catch (Throwable ignored) {
-                // Try next candidate holder class.
-            }
         }
     }
 

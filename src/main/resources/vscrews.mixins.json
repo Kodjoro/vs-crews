@@ -8,7 +8,7 @@
     "MixinWorld",
     "MixinBlockProtection",
     "MixinGomuGomuNoRocketProjectile",
-    "MixinContinuousComponent"
+    "MixinBetaBetaChainProjectile"
   ],
   "client": [],
   "injectors": {
